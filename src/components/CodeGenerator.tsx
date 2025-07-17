@@ -8,6 +8,10 @@ import { WebContainer, FileSystemTree } from '@webcontainer/api';
 import { MonacoEditor } from './MonacoEditor';
 import { PreviewFrame } from './PreviewFrame';
 import { ImageUpload } from './ImageUpload';
+import { ModelSelector } from './ModelSelector';
+import { ApiKeyManager } from './ApiKeyManager';
+import { AIProviderManager, AIProvider } from '@/lib/ai-providers';
+import { inngest } from '@/lib/inngest';
 import { toast } from "sonner";
 import { 
   Wand2, 
@@ -18,7 +22,8 @@ import {
   Download,
   Sparkles,
   Brain,
-  Palette
+  Palette,
+  Settings
 } from 'lucide-react';
 
 interface GeneratedCode {
@@ -34,7 +39,11 @@ export const CodeGenerator: React.FC = () => {
   const [generatedCode, setGeneratedCode] = useState<GeneratedCode | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPreviewReady, setIsPreviewReady] = useState(false);
-  const [activeTab, setActiveTab] = useState<'prompt' | 'image'>('prompt');
+  const [activeTab, setActiveTab] = useState<'prompt' | 'image' | 'settings'>('prompt');
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('openai');
+  const [selectedModel, setSelectedModel] = useState('gpt-4-turbo');
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+  const [conversationId] = useState(() => `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const webcontainerInstance = useRef<WebContainer | null>(null);
   const previewRef = useRef<HTMLIFrameElement>(null);
 
@@ -422,6 +431,17 @@ ReactDOM.render(React.createElement(App), document.getElementById('root'));
                 <ImageIcon className="h-4 w-4" />
                 Image Upload
               </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm transition-all ${
+                  activeTab === 'settings' 
+                    ? 'bg-background shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </button>
             </div>
           </div>
 
@@ -440,11 +460,21 @@ ReactDOM.render(React.createElement(App), document.getElementById('root'));
                   />
                 </div>
               </div>
-            ) : (
+            ) : activeTab === 'image' ? (
               <ImageUpload 
                 onImageUpload={setUploadedImage}
                 uploadedImage={uploadedImage}
               />
+            ) : (
+              <div className="space-y-4">
+                <ApiKeyManager onApiKeysChange={setApiKeys} />
+                <ModelSelector
+                  selectedProvider={selectedProvider}
+                  selectedModel={selectedModel}
+                  onProviderChange={setSelectedProvider}
+                  onModelChange={setSelectedModel}
+                />
+              </div>
             )}
 
             <Button 
