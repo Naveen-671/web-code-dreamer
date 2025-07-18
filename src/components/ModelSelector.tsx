@@ -1,129 +1,78 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AI_MODELS, AIProvider } from '@/lib/ai-providers';
-import { Brain, Zap, Shield, Sparkles } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 interface ModelSelectorProps {
-  selectedProvider: AIProvider;
+  selectedProvider: 'gemini' | 'huggingface' | 'openai';
   selectedModel: string;
-  onProviderChange: (provider: AIProvider) => void;
+  onProviderChange: (provider: 'gemini' | 'huggingface' | 'openai') => void;
   onModelChange: (model: string) => void;
 }
 
-const providerInfo = {
-  openai: {
-    name: 'OpenAI',
-    icon: Brain,
-    color: 'bg-emerald-500',
-    description: 'Industry-leading language models'
-  },
-  anthropic: {
-    name: 'Anthropic',
-    icon: Shield,
-    color: 'bg-orange-500',
-    description: 'Safe and helpful AI assistant'
-  },
-  google: {
-    name: 'Google',
-    icon: Sparkles,
-    color: 'bg-blue-500',
-    description: 'Advanced multimodal capabilities'
-  },
-  huggingface: {
-    name: 'Hugging Face',
-    icon: Zap,
-    color: 'bg-yellow-500',
-    description: 'Open-source AI models'
-  }
+const AI_MODELS = {
+  gemini: [
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast and efficient' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Most capable' },
+    { id: 'gemini-pro', name: 'Gemini Pro', description: 'Reliable performance' }
+  ],
+  huggingface: [
+    { id: 'microsoft/DialoGPT-large', name: 'DialoGPT Large', description: 'Conversational AI' },
+    { id: 'microsoft/CodeBERT-base', name: 'CodeBERT', description: 'Code generation' },
+    { id: 'codellama/CodeLlama-34b-Instruct-hf', name: 'CodeLlama 34B', description: 'Code specialized' }
+  ],
+  openai: [
+    { id: 'gpt-4o-mini', name: 'GPT-4O Mini', description: 'Fast and efficient' },
+    { id: 'gpt-4o', name: 'GPT-4O', description: 'Most capable' },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Balanced performance' }
+  ]
 };
 
-export const ModelSelector: React.FC<ModelSelectorProps> = ({
-  selectedProvider,
-  selectedModel,
-  onProviderChange,
-  onModelChange
-}) => {
-  const currentModels = AI_MODELS[selectedProvider] || [];
-  const currentModel = currentModels.find(m => m.id === selectedModel);
+export function ModelSelector({ selectedProvider, selectedModel, onProviderChange, onModelChange }: ModelSelectorProps) {
+  const availableModels = AI_MODELS[selectedProvider] || [];
+
+  const handleProviderChange = (provider: string) => {
+    onProviderChange(provider as 'gemini' | 'huggingface' | 'openai');
+    // Set default model for the new provider
+    const defaultModel = AI_MODELS[provider as 'gemini' | 'huggingface' | 'openai']?.[0]?.id;
+    if (defaultModel) {
+      onModelChange(defaultModel);
+    }
+  };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">AI Model Selection</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Provider Selection */}
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Provider</label>
-          <Select value={selectedProvider} onValueChange={onProviderChange}>
-            <SelectTrigger className="h-8">
-              <SelectValue>
-                <div className="flex items-center gap-2">
-                  {React.createElement(providerInfo[selectedProvider].icon, { 
-                    className: "h-4 w-4" 
-                  })}
-                  <span>{providerInfo[selectedProvider].name}</span>
-                </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(providerInfo).map(([key, info]) => (
-                <SelectItem key={key} value={key}>
-                  <div className="flex items-center gap-2">
-                    {React.createElement(info.icon, { className: "h-4 w-4" })}
-                    <div>
-                      <div className="font-medium">{info.name}</div>
-                      <div className="text-xs text-muted-foreground">{info.description}</div>
-                    </div>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="provider">AI Provider</Label>
+        <Select value={selectedProvider} onValueChange={handleProviderChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select provider" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="gemini">Google Gemini</SelectItem>
+            <SelectItem value="huggingface">Hugging Face</SelectItem>
+            <SelectItem value="openai">OpenAI</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Model Selection */}
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">Model</label>
-          <Select value={selectedModel} onValueChange={onModelChange}>
-            <SelectTrigger className="h-8">
-              <SelectValue>
-                <div className="flex items-center gap-2">
-                  <span>{currentModel?.name || 'Select model'}</span>
-                  {currentModel && (
-                    <Badge variant="secondary" className="text-xs">
-                      {currentModel.description}
-                    </Badge>
-                  )}
+      <div>
+        <Label htmlFor="model">Model</Label>
+        <Select value={selectedModel} onValueChange={onModelChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select model" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableModels.map((model) => (
+              <SelectItem key={model.id} value={model.id}>
+                <div>
+                  <div className="font-medium">{model.name}</div>
+                  <div className="text-sm text-muted-foreground">{model.description}</div>
                 </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {currentModels.map((model) => (
-                <SelectItem key={model.id} value={model.id}>
-                  <div>
-                    <div className="font-medium">{model.name}</div>
-                    <div className="text-xs text-muted-foreground">{model.description}</div>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Current Selection Info */}
-        {currentModel && (
-          <div className="p-3 bg-muted/30 rounded-md">
-            <div className="flex items-center gap-2 mb-1">
-              <div className={`w-2 h-2 rounded-full ${providerInfo[selectedProvider].color}`} />
-              <span className="text-xs font-medium">{providerInfo[selectedProvider].name} • {currentModel.name}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">{currentModel.description}</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
   );
-};
+}
