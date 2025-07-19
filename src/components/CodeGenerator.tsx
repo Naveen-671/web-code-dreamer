@@ -279,51 +279,25 @@ export function CodeGenerator() {
                 <Code2 className="w-5 h-5" />
                 Generated Code
               </CardTitle>
-              {currentProject?.framework && (
-                <Badge variant="secondary">{currentProject.framework}</Badge>
+              {currentProject && (
+                <Badge variant="secondary">{currentProject.framework || 'html'}</Badge>
               )}
             </CardHeader>
             <CardContent className="h-[calc(100%-4rem)]">
-              <Tabs defaultValue="html" className="h-full">
-                <TabsList>
-                  <TabsTrigger value="html">HTML</TabsTrigger>
-                  <TabsTrigger value="css">CSS</TabsTrigger>
-                  <TabsTrigger value="js">JavaScript</TabsTrigger>
-                </TabsList>
-                <TabsContent value="html" className="h-[calc(100%-3rem)]">
-                  <MonacoEditor
-                    defaultValue={currentProject?.generated_html || ''}
-                    language="html"
-                    onChange={(value) => {
-                      if (currentProject) {
-                        setCurrentProject(prev => prev ? { ...prev, generated_html: value || '' } : null);
-                      }
-                    }}
-                  />
-                </TabsContent>
-                <TabsContent value="css" className="h-[calc(100%-3rem)]">
-                  <MonacoEditor
-                    defaultValue={currentProject?.generated_css || ''}
-                    language="css"
-                    onChange={(value) => {
-                      if (currentProject) {
-                        setCurrentProject(prev => prev ? { ...prev, generated_css: value || '' } : null);
-                      }
-                    }}
-                  />
-                </TabsContent>
-                <TabsContent value="js" className="h-[calc(100%-3rem)]">
-                  <MonacoEditor
-                    defaultValue={currentProject?.generated_js || ''}
-                    language="javascript"
-                    onChange={(value) => {
-                      if (currentProject) {
-                        setCurrentProject(prev => prev ? { ...prev, generated_js: value || '' } : null);
-                      }
-                    }}
-                  />
-                </TabsContent>
-              </Tabs>
+              {currentProject ? (
+                <MonacoEditor
+                  code={{
+                    html: currentProject.generated_html || '',
+                    css: currentProject.generated_css || '',
+                    js: currentProject.generated_js || '',
+                    framework: (currentProject.framework as 'react' | 'html' | 'vue') || 'html'
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Select a project to view generated code
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
