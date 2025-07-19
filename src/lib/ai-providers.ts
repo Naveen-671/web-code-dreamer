@@ -1,8 +1,7 @@
-import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export type AIProvider = 'openai' | 'anthropic' | 'google' | 'huggingface';
+export type AIProvider = 'nvidia' | 'anthropic' | 'google' | 'huggingface';
 
 export interface AIConfig {
   provider: AIProvider;
@@ -21,11 +20,10 @@ export class AIProviderManager {
 
   private initializeProvider(config: AIConfig) {
     switch (config.provider) {
-      case 'openai':
-        this.providers.set('openai', new OpenAI({
-          apiKey: config.apiKey,
-          dangerouslyAllowBrowser: true
-        }));
+      case 'nvidia':
+        this.providers.set('nvidia', {
+          apiKey: config.apiKey
+        });
         break;
       case 'anthropic':
         this.providers.set('anthropic', new Anthropic({
@@ -47,8 +45,8 @@ export class AIProviderManager {
     const fullPrompt = `${basePrompt}\n\nUser Request: ${prompt}`;
 
     switch (provider) {
-      case 'openai':
-        return this.generateWithOpenAI(fullPrompt, model);
+      case 'nvidia':
+        return this.generateWithNvidia(fullPrompt, model);
       case 'anthropic':
         return this.generateWithAnthropic(fullPrompt, model);
       case 'google':
@@ -58,16 +56,24 @@ export class AIProviderManager {
     }
   }
 
-  private async generateWithOpenAI(prompt: string, model: string): Promise<string> {
-    const openai = this.providers.get('openai');
-    const response = await openai.chat.completions.create({
-      model: model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 4000
+  private async generateWithNvidia(prompt: string, model: string): Promise<string> {
+    const nvidia = this.providers.get('nvidia');
+    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${nvidia.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 4000
+      })
     });
     
-    return response.choices[0].message.content || '';
+    const data = await response.json();
+    return data.choices[0].message.content || '';
   }
 
   private async generateWithAnthropic(prompt: string, model: string): Promise<string> {
@@ -134,10 +140,10 @@ TECHNICAL REQUIREMENTS:
 }
 
 export const AI_MODELS = {
-  openai: [
-    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Most capable model' },
-    { id: 'gpt-4', name: 'GPT-4', description: 'Powerful and creative' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Fast and efficient' }
+  nvidia: [
+    { id: 'nvidia/nemotron-4-340b-instruct', name: 'Nemotron 4 340B Instruct', description: 'Most capable NVIDIA model' },
+    { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B Instruct', description: 'Powerful reasoning' },
+    { id: 'meta/llama-3.1-70b-instruct', name: 'Llama 3.1 70B Instruct', description: 'Fast and efficient' }
   ],
   anthropic: [
     { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Most intelligent' },

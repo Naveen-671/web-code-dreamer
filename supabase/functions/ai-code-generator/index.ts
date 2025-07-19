@@ -10,7 +10,7 @@ const corsHeaders = {
 interface GenerateCodeRequest {
   prompt: string;
   image?: string;
-  provider: 'gemini' | 'huggingface' | 'openai';
+  provider: 'gemini' | 'huggingface' | 'nvidia';
   model: string;
   projectId: string;
 }
@@ -82,8 +82,8 @@ serve(async (req) => {
       generatedResponse = await generateWithGemini(prompt, image, model);
     } else if (provider === 'huggingface') {
       generatedResponse = await generateWithHuggingFace(prompt, image, model);
-    } else if (provider === 'openai') {
-      generatedResponse = await generateWithOpenAI(prompt, image, model);
+    } else if (provider === 'nvidia') {
+      generatedResponse = await generateWithNvidia(prompt, image, model);
     }
 
     // Parse the AI response
@@ -229,9 +229,9 @@ async function generateWithHuggingFace(prompt: string, image?: string, model: st
   });
 }
 
-async function generateWithOpenAI(prompt: string, image?: string, model: string = 'gpt-4o-mini'): Promise<string> {
-  const apiKey = Deno.env.get('OPENAI_API_KEY');
-  if (!apiKey) throw new Error('OPENAI_API_KEY not found');
+async function generateWithNvidia(prompt: string, image?: string, model: string = 'nvidia/nemotron-4-340b-instruct'): Promise<string> {
+  const apiKey = Deno.env.get('NVIDIA_API_KEY');
+  if (!apiKey) throw new Error('NVIDIA_API_KEY not found');
 
   const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}`;
   
@@ -247,7 +247,7 @@ async function generateWithOpenAI(prompt: string, image?: string, model: string 
     ];
   }
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -257,14 +257,15 @@ async function generateWithOpenAI(prompt: string, image?: string, model: string 
       model,
       messages,
       temperature: 0.7,
-      max_tokens: 4000
+      max_tokens: 4000,
+      stream: false
     })
   });
 
   const data = await response.json();
   
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
+    throw new Error(`NVIDIA API error: ${data.error?.message || 'Unknown error'}`);
   }
 
   return data.choices[0].message.content;

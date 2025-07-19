@@ -71,12 +71,12 @@ export const generateCodeAgent = inngest.createFunction(
 
       // Use a fast model for analysis
       const aiManager = new AIProviderManager([{
-        provider: 'openai',
-        model: 'gpt-3.5-turbo',
-        apiKey: process.env.OPENAI_API_KEY || ''
+        provider: 'nvidia',
+        model: 'meta/llama-3.1-70b-instruct',
+        apiKey: process.env.NVIDIA_API_KEY || ''
       }]);
 
-      const analysisResponse = await aiManager.generateCode(contextPrompt, 'openai', 'gpt-3.5-turbo');
+      const analysisResponse = await aiManager.generateCode(contextPrompt, 'nvidia', 'meta/llama-3.1-70b-instruct');
       
       try {
         return JSON.parse(analysisResponse);

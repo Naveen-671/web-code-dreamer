@@ -22,12 +22,12 @@ interface ApiKeyConfig {
 
 const apiKeyConfigs: ApiKeyConfig[] = [
   {
-    provider: 'openai',
-    name: 'OpenAI',
-    envVar: 'OPENAI_API_KEY',
-    placeholder: 'sk-...',
-    docUrl: 'https://platform.openai.com/api-keys',
-    description: 'Get your API key from OpenAI Platform'
+    provider: 'nvidia',
+    name: 'NVIDIA',
+    envVar: 'NVIDIA_API_KEY',
+    placeholder: 'nvapi-...',
+    docUrl: 'https://build.nvidia.com/explore/discover',
+    description: 'Get your API key from NVIDIA API Catalog'
   },
   {
     provider: 'anthropic',
@@ -108,11 +108,11 @@ export const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ onApiKeysChange })
       let testResult = false;
       
       switch (provider) {
-        case 'openai':
-          const openaiResponse = await fetch('https://api.openai.com/v1/models', {
+        case 'nvidia':
+          const nvidiaResponse = await fetch('https://integrate.api.nvidia.com/v1/models', {
             headers: { 'Authorization': `Bearer ${key}` }
           });
-          testResult = openaiResponse.ok;
+          testResult = nvidiaResponse.ok;
           break;
           
         case 'anthropic':

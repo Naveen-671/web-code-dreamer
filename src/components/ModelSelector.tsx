@@ -3,9 +3,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 
 interface ModelSelectorProps {
-  selectedProvider: 'gemini' | 'huggingface' | 'openai';
+  selectedProvider: 'gemini' | 'huggingface' | 'nvidia';
   selectedModel: string;
-  onProviderChange: (provider: 'gemini' | 'huggingface' | 'openai') => void;
+  onProviderChange: (provider: 'gemini' | 'huggingface' | 'nvidia') => void;
   onModelChange: (model: string) => void;
 }
 
@@ -20,10 +20,10 @@ const AI_MODELS = {
     { id: 'microsoft/CodeBERT-base', name: 'CodeBERT', description: 'Code generation' },
     { id: 'codellama/CodeLlama-34b-Instruct-hf', name: 'CodeLlama 34B', description: 'Code specialized' }
   ],
-  openai: [
-    { id: 'gpt-4o-mini', name: 'GPT-4O Mini', description: 'Fast and efficient' },
-    { id: 'gpt-4o', name: 'GPT-4O', description: 'Most capable' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Balanced performance' }
+  nvidia: [
+    { id: 'nvidia/nemotron-4-340b-instruct', name: 'Nemotron 4 340B Instruct', description: 'Most capable NVIDIA model' },
+    { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B Instruct', description: 'Powerful reasoning' },
+    { id: 'meta/llama-3.1-70b-instruct', name: 'Llama 3.1 70B Instruct', description: 'Fast and efficient' }
   ]
 };
 
@@ -31,9 +31,9 @@ export function ModelSelector({ selectedProvider, selectedModel, onProviderChang
   const availableModels = AI_MODELS[selectedProvider] || [];
 
   const handleProviderChange = (provider: string) => {
-    onProviderChange(provider as 'gemini' | 'huggingface' | 'openai');
+    onProviderChange(provider as 'gemini' | 'huggingface' | 'nvidia');
     // Set default model for the new provider
-    const defaultModel = AI_MODELS[provider as 'gemini' | 'huggingface' | 'openai']?.[0]?.id;
+    const defaultModel = AI_MODELS[provider as 'gemini' | 'huggingface' | 'nvidia']?.[0]?.id;
     if (defaultModel) {
       onModelChange(defaultModel);
     }
@@ -50,7 +50,7 @@ export function ModelSelector({ selectedProvider, selectedModel, onProviderChang
           <SelectContent>
             <SelectItem value="gemini">Google Gemini</SelectItem>
             <SelectItem value="huggingface">Hugging Face</SelectItem>
-            <SelectItem value="openai">OpenAI</SelectItem>
+            <SelectItem value="nvidia">NVIDIA</SelectItem>
           </SelectContent>
         </Select>
       </div>

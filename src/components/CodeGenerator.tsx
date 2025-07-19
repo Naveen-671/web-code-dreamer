@@ -33,12 +33,15 @@ export function CodeGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'huggingface' | 'openai'>('gemini');
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
+  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'huggingface' | 'nvidia'>('nvidia');
+  const [selectedModel, setSelectedModel] = useState('nvidia/nemotron-4-340b-instruct');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('prompt');
 
   useEffect(() => {
+    // Initialize API keys from your provided values
+    localStorage.setItem('HUGGINGFACE_API_KEY', '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');
+    localStorage.setItem('GOOGLE_API_KEY', 'AIzaSyDUVLXa_5oxCng36P2EsevoT0EVguVlvJY');
     loadProjects();
   }, []);
 
