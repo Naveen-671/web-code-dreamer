@@ -39,6 +39,11 @@ export function PreviewFrame({ html, css, js }: PreviewFrameProps) {
       setIsLoading(true);
       console.log('Initializing WebContainer...');
       
+      // Check if WebContainer is supported in this environment
+      if (typeof SharedArrayBuffer === 'undefined') {
+        throw new Error('SharedArrayBuffer not available - WebContainer requires cross-origin isolation');
+      }
+      
       const webcontainer = await WebContainer.boot();
       setWebcontainerInstance(webcontainer);
       
@@ -47,7 +52,8 @@ export function PreviewFrame({ html, css, js }: PreviewFrameProps) {
       
     } catch (error) {
       console.error('Failed to initialize WebContainer:', error);
-      toast.error('WebContainer failed, using fallback preview');
+      console.log('Falling back to iframe preview mode');
+      toast.error('Using enhanced iframe preview (WebContainer unavailable)');
       setUseWebContainer(false);
     } finally {
       setIsLoading(false);

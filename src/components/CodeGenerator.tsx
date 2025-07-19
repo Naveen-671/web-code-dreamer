@@ -157,15 +157,15 @@ export function CodeGenerator() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-screen">
+    <div className="container mx-auto p-6 max-w-7xl h-screen overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
         {/* Left Panel - Projects List */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
+        <div className="flex flex-col h-full">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="flex-shrink-0">
               <CardTitle className="text-lg">Projects</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 max-h-[600px] overflow-y-auto">
+            <CardContent className="flex-1 overflow-y-auto space-y-2">
               {projects.map((project) => (
                 <div
                   key={project.id}
@@ -209,15 +209,15 @@ export function CodeGenerator() {
         </div>
 
         {/* Input Panel */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
+        <div className="flex flex-col h-full">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="flex-shrink-0">
               <CardTitle className="flex items-center gap-2">
                 <Code2 className="w-5 h-5" />
                 AI Code Generator
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-y-auto">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="prompt">Prompt</TabsTrigger>
@@ -272,9 +272,9 @@ export function CodeGenerator() {
         </div>
 
         {/* Code Editor Panel */}
-        <div className="space-y-6">
-          <Card className="h-full">
-            <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex flex-col h-full">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
               <CardTitle className="flex items-center gap-2">
                 <Code2 className="w-5 h-5" />
                 Generated Code
@@ -283,7 +283,7 @@ export function CodeGenerator() {
                 <Badge variant="secondary">{currentProject.framework || 'html'}</Badge>
               )}
             </CardHeader>
-            <CardContent className="h-[calc(100%-4rem)]">
+            <CardContent className="flex-1 overflow-hidden">
               {currentProject ? (
                 <MonacoEditor
                   code={{
@@ -303,15 +303,15 @@ export function CodeGenerator() {
         </div>
 
         {/* Preview Panel */}
-        <div className="space-y-6">
-          <Card className="h-full">
-            <CardHeader>
+        <div className="flex flex-col h-full">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="flex-shrink-0">
               <CardTitle className="flex items-center gap-2">
                 <Eye className="w-5 h-5" />
                 Live Preview
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-[calc(100%-4rem)]">
+            <CardContent className="flex-1 overflow-hidden">
               <PreviewFrame 
                 html={currentProject?.generated_html || ''}
                 css={currentProject?.generated_css || ''}
