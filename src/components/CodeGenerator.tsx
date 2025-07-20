@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Play, Code2, Eye, Settings, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ThemeToggle } from './ThemeToggle';
 import { MonacoEditor } from './MonacoEditor';
 import { PreviewFrame } from './PreviewFrame';
 import { ImageUpload } from './ImageUpload';
@@ -177,7 +178,10 @@ export function CodeGenerator() {
 
   return (
     <div className="container mx-auto p-6 max-w-7xl h-screen flex flex-col overflow-hidden">
-      <h1 className="text-3xl font-bold text-center mb-6 flex-shrink-0">AI Code Generator</h1>
+      <div className="flex items-center justify-between mb-6 flex-shrink-0">
+        <h1 className="text-3xl font-bold flex-1 text-center">AI Code Generator</h1>
+        <ThemeToggle />
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">{/* min-h-0 allows flex children to shrink */}
         {/* Left Panel - Projects List */}
