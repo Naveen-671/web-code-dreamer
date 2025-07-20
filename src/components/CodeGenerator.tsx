@@ -42,8 +42,17 @@ export function CodeGenerator() {
     // Initialize API keys from your provided values
     localStorage.setItem('HUGGINGFACE_API_KEY', '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');
     localStorage.setItem('GOOGLE_API_KEY', 'AIzaSyDUVLXa_5oxCng36P2EsevoT0EVguVlvJY');
+    initializeAuth();
     loadProjects();
   }, []);
+
+  const initializeAuth = async () => {
+    // Sign in anonymously if no user is logged in
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      await supabase.auth.signInAnonymously();
+    }
+  };
 
   const loadProjects = async () => {
     try {
@@ -68,6 +77,12 @@ export function CodeGenerator() {
 
     setIsGenerating(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       // Create new project
       const { data: project, error: projectError } = await supabase
         .from('projects')
@@ -77,7 +92,8 @@ export function CodeGenerator() {
           prompt,
           image_url: uploadedImage,
           framework: 'html',
-          status: 'pending'
+          status: 'pending',
+          user_id: user.id
         })
         .select()
         .single();
