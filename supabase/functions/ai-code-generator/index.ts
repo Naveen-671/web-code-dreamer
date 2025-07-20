@@ -64,27 +64,44 @@ serve(async (req) => {
     const { prompt, image, provider, model, projectId }: GenerateCodeRequest = await req.json();
     
     console.log(`Generating code with ${provider} model ${model} for project ${projectId}`);
+    console.log(`Prompt: ${prompt.substring(0, 100)}...`);
     
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase environment variables not found');
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Update project status to generating
-    await supabase
+    const { error: updateError } = await supabase
       .from('projects')
       .update({ status: 'generating' })
       .eq('id', projectId);
+      
+    if (updateError) {
+      console.error('Error updating project status:', updateError);
+      throw new Error(`Failed to update project status: ${updateError.message}`);
+    }
 
     let generatedResponse = '';
 
+    console.log(`Calling ${provider} provider...`);
+    
     if (provider === 'gemini') {
       generatedResponse = await generateWithGemini(prompt, image, model);
     } else if (provider === 'huggingface') {
       generatedResponse = await generateWithHuggingFace(prompt, image, model);
     } else if (provider === 'nvidia') {
       generatedResponse = await generateWithNvidia(prompt, image, model);
+    } else {
+      throw new Error(`Unsupported provider: ${provider}`);
     }
+    
+    console.log('Generated response length:', generatedResponse.length);
 
     // Parse the AI response
     let parsedCode;
@@ -131,6 +148,25 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in ai-code-generator:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Try to update project status to error if we have the projectId
+    const requestBody = await req.clone().json().catch(() => ({}));
+    if (requestBody.projectId) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        if (supabaseUrl && supabaseKey) {
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          await supabase
+            .from('projects')
+            .update({ status: 'error' })
+            .eq('id', requestBody.projectId);
+        }
+      } catch (updateError) {
+        console.error('Failed to update project status to error:', updateError);
+      }
+    }
     
     return new Response(
       JSON.stringify({ 
@@ -146,6 +182,7 @@ serve(async (req) => {
 });
 
 async function generateWithGemini(prompt: string, image?: string, model: string = 'gemini-1.5-flash'): Promise<string> {
+  console.log('Starting Gemini generation...');
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY not found in environment variables');
 
@@ -171,6 +208,7 @@ async function generateWithGemini(prompt: string, image?: string, model: string 
     });
   }
 
+  console.log(`Calling Gemini API with model: ${model}`);
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
@@ -181,12 +219,16 @@ async function generateWithGemini(prompt: string, image?: string, model: string 
   );
 
   const data = await response.json();
+  console.log('Gemini response status:', response.status);
   
   if (!response.ok) {
+    console.error('Gemini API error response:', data);
     throw new Error(`Gemini API error: ${data.error?.message || 'Unknown error'}`);
   }
 
-  return data.candidates[0].content.parts[0].text;
+  const result = data.candidates[0].content.parts[0].text;
+  console.log('Gemini generation completed successfully');
+  return result;
 }
 
 async function generateWithHuggingFace(prompt: string, image?: string, model: string = 'microsoft/DialoGPT-large'): Promise<string> {
