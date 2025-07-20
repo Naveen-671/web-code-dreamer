@@ -147,7 +147,7 @@ serve(async (req) => {
 
 async function generateWithGemini(prompt: string, image?: string, model: string = 'gemini-1.5-flash'): Promise<string> {
   const apiKey = Deno.env.get('GEMINI_API_KEY');
-  if (!apiKey) throw new Error('GEMINI_API_KEY not found');
+  if (!apiKey) throw new Error('GEMINI_API_KEY not found in environment variables');
 
   const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}`;
   
