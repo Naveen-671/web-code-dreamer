@@ -19,7 +19,7 @@ const BASE_PROMPT = `You are an expert web developer AI that generates complete,
 
 CRITICAL INSTRUCTIONS:
 1. Generate a complete HTML file with embedded CSS and JavaScript
-2. Use modern web technologies (HTML5, CSS3, ES6+)
+2. Use modern web technologies (HTML5, CSS3, ES6+)  
 3. Make the design responsive and visually appealing
 4. Include proper meta tags and semantic HTML
 5. Use CSS Grid/Flexbox for layouts
@@ -53,7 +53,9 @@ TECHNICAL REQUIREMENTS:
 - Include proper error handling and validation
 - Optimize for performance and loading speed
 - Use semantic HTML elements
-- Implement proper SEO meta tags`;
+- Implement proper SEO meta tags
+
+Generate DIFFERENT content based on the user's specific request. Be creative and varied in your responses.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -186,14 +188,14 @@ async function generateWithGemini(prompt: string, image?: string, model: string 
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY not found in environment variables');
 
-  const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}`;
+  const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}\n\nIMPORTANT: Generate UNIQUE and VARIED content based on this specific request. Make it different from previous generations. Be creative and implement the specific features requested.`;
   
   const requestBody: any = {
     contents: [{
       parts: [{ text: fullPrompt }]
     }],
     generationConfig: {
-      temperature: 0.7,
+      temperature: 0.9,
       maxOutputTokens: 8192,
     }
   };
@@ -236,13 +238,11 @@ async function generateWithHuggingFace(prompt: string, image?: string, model: st
   const apiKey = Deno.env.get('HUGGINGFACE_API_KEY');
   if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not found');
 
-  // Use a more capable model for code generation
-  const codeModel = model.includes('CodeLlama') ? model : 'microsoft/DialoGPT-large';
-  const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}`;
+  const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}\n\nIMPORTANT: Generate UNIQUE and VARIED content based on this specific request. Make it different from previous generations.`;
 
-  console.log(`Calling HuggingFace API with model: ${codeModel}`);
+  console.log(`Calling HuggingFace API with model: ${model}`);
   const response = await fetch(
-    `https://api-inference.huggingface.co/models/${codeModel}`,
+    `https://api-inference.huggingface.co/models/${model}`,
     {
       method: 'POST',
       headers: {
@@ -253,7 +253,7 @@ async function generateWithHuggingFace(prompt: string, image?: string, model: st
         inputs: fullPrompt,
         parameters: {
           max_new_tokens: 4000,
-          temperature: 0.7,
+          temperature: 0.8,
           do_sample: true,
           return_full_text: false
         }
@@ -292,10 +292,10 @@ async function generateWithNvidia(prompt: string, image?: string, model: string 
   const apiKey = Deno.env.get('NVIDIA_API_KEY');
   if (!apiKey) throw new Error('NVIDIA_API_KEY not found');
 
-  const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}`;
+  const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}\n\nIMPORTANT: Generate UNIQUE and VARIED content based on this specific request. Make it different from previous generations.`;
   
   const messages: any[] = [
-    { role: 'system', content: 'You are an expert web developer that generates complete web applications. Always respond with valid JSON containing html, css, js, framework, and description fields.' },
+    { role: 'system', content: 'You are an expert web developer that generates complete web applications. Always respond with valid JSON containing html, css, js, framework, and description fields. Be creative and generate different content for different requests.' },
     { role: 'user', content: fullPrompt }
   ];
 
@@ -316,7 +316,7 @@ async function generateWithNvidia(prompt: string, image?: string, model: string 
     body: JSON.stringify({
       model,
       messages,
-      temperature: 0.7,
+      temperature: 0.8,
       max_tokens: 4000,
       stream: false
     })
