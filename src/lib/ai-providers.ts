@@ -141,22 +141,21 @@ TECHNICAL REQUIREMENTS:
 
 export const AI_MODELS = {
   nvidia: [
-    { id: 'nvidia/nemotron-4-340b-instruct', name: 'Nemotron 4 340B Instruct', description: 'Most capable NVIDIA model' },
-    { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B Instruct', description: 'Powerful reasoning' },
-    { id: 'meta/llama-3.1-70b-instruct', name: 'Llama 3.1 70B Instruct', description: 'Fast and efficient' }
+    { id: 'microsoft/phi-3-mini-4k-instruct', name: 'Phi-3 Mini 4K', description: 'Free Microsoft model' },
+    { id: 'meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', description: 'Free Meta model' },
+    { id: 'mistralai/mistral-7b-instruct-v0.3', name: 'Mistral 7B', description: 'Free Mistral model' }
   ],
   anthropic: [
-    { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Most intelligent' },
-    { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced performance' },
     { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fastest responses' }
   ],
   google: [
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Advanced reasoning' },
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast responses' },
-    { id: 'gemini-pro', name: 'Gemini Pro', description: 'Reliable performance' }
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Free and fast' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Free tier available' },
+    { id: 'gemini-pro', name: 'Gemini Pro', description: 'Free tier available' }
   ],
   huggingface: [
-    { id: 'codellama/CodeLlama-34b-Instruct-hf', name: 'CodeLlama 34B', description: 'Code specialized' },
-    { id: 'meta-llama/Llama-2-70b-chat-hf', name: 'Llama 2 70B', description: 'General purpose' }
+    { id: 'microsoft/DialoGPT-medium', name: 'DialoGPT Medium', description: 'Free conversational model' },
+    { id: 'bigcode/starcoder2-3b', name: 'StarCoder2 3B', description: 'Free code model' },
+    { id: 'HuggingFaceH4/zephyr-7b-beta', name: 'Zephyr 7B', description: 'Free instruction model' }
   ]
 };
