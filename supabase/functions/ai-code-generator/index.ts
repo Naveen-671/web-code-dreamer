@@ -908,7 +908,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });`;
   }
-});
-
-console.log('Generated application loaded successfully!');`;
 }
