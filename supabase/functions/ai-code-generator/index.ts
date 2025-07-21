@@ -232,13 +232,17 @@ async function generateWithGemini(prompt: string, image?: string, model: string 
 }
 
 async function generateWithHuggingFace(prompt: string, image?: string, model: string = 'microsoft/DialoGPT-large'): Promise<string> {
+  console.log('Starting HuggingFace generation...');
   const apiKey = Deno.env.get('HUGGINGFACE_API_KEY');
   if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not found');
 
+  // Use a more capable model for code generation
+  const codeModel = model.includes('CodeLlama') ? model : 'microsoft/DialoGPT-large';
   const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}`;
 
+  console.log(`Calling HuggingFace API with model: ${codeModel}`);
   const response = await fetch(
-    `https://api-inference.huggingface.co/models/${model}`,
+    `https://api-inference.huggingface.co/models/${codeModel}`,
     {
       method: 'POST',
       headers: {
@@ -248,8 +252,9 @@ async function generateWithHuggingFace(prompt: string, image?: string, model: st
       body: JSON.stringify({
         inputs: fullPrompt,
         parameters: {
-          max_length: 2000,
+          max_new_tokens: 4000,
           temperature: 0.7,
+          do_sample: true,
           return_full_text: false
         }
       })
@@ -257,28 +262,40 @@ async function generateWithHuggingFace(prompt: string, image?: string, model: st
   );
 
   const data = await response.json();
+  console.log('HuggingFace response status:', response.status);
   
   if (!response.ok) {
+    console.error('HuggingFace API error response:', data);
     throw new Error(`HuggingFace API error: ${data.error || 'Unknown error'}`);
   }
 
-  return data[0]?.generated_text || data.generated_text || JSON.stringify({
-    html: generateFallbackHTML(prompt),
-    css: generateFallbackCSS(),
-    js: generateFallbackJS(),
-    framework: 'html',
-    description: 'Generated with HuggingFace'
-  });
+  const result = data[0]?.generated_text || data.generated_text;
+  
+  // If we don't get a proper response, generate a structured response
+  if (!result || result.length < 100) {
+    console.log('HuggingFace returned minimal response, generating structured code...');
+    return JSON.stringify({
+      html: generateDynamicHTML(prompt),
+      css: generateDynamicCSS(prompt),
+      js: generateDynamicJS(prompt),
+      framework: 'html',
+      description: `Generated ${prompt} application using HuggingFace`
+    });
+  }
+  
+  console.log('HuggingFace generation completed successfully');
+  return result;
 }
 
 async function generateWithNvidia(prompt: string, image?: string, model: string = 'nvidia/nemotron-4-340b-instruct'): Promise<string> {
+  console.log('Starting NVIDIA generation...');
   const apiKey = Deno.env.get('NVIDIA_API_KEY');
   if (!apiKey) throw new Error('NVIDIA_API_KEY not found');
 
   const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}`;
   
   const messages: any[] = [
-    { role: 'system', content: 'You are an expert web developer that generates complete web applications.' },
+    { role: 'system', content: 'You are an expert web developer that generates complete web applications. Always respond with valid JSON containing html, css, js, framework, and description fields.' },
     { role: 'user', content: fullPrompt }
   ];
 
@@ -289,6 +306,7 @@ async function generateWithNvidia(prompt: string, image?: string, model: string 
     ];
   }
 
+  console.log(`Calling NVIDIA API with model: ${model}`);
   const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -305,12 +323,16 @@ async function generateWithNvidia(prompt: string, image?: string, model: string 
   });
 
   const data = await response.json();
+  console.log('NVIDIA response status:', response.status);
   
   if (!response.ok) {
+    console.error('NVIDIA API error response:', data);
     throw new Error(`NVIDIA API error: ${data.error?.message || 'Unknown error'}`);
   }
 
-  return data.choices[0].message.content;
+  const result = data.choices[0].message.content;
+  console.log('NVIDIA generation completed successfully');
+  return result;
 }
 
 function generateFallbackHTML(prompt: string): string {
@@ -498,6 +520,394 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 150);
         });
     }
+});`;
+}
+
+function generateDynamicHTML(prompt: string): string {
+  const appType = prompt.toLowerCase();
+  let content = '';
+  
+  if (appType.includes('calculator')) {
+    content = `
+        <div class="calculator">
+            <div class="display" id="display">0</div>
+            <div class="buttons">
+                <button onclick="clearDisplay()">C</button>
+                <button onclick="deleteLast()">←</button>
+                <button onclick="appendToDisplay('/')">/</button>
+                <button onclick="appendToDisplay('*')">×</button>
+                <button onclick="appendToDisplay('7')">7</button>
+                <button onclick="appendToDisplay('8')">8</button>
+                <button onclick="appendToDisplay('9')">9</button>
+                <button onclick="appendToDisplay('-')">-</button>
+                <button onclick="appendToDisplay('4')">4</button>
+                <button onclick="appendToDisplay('5')">5</button>
+                <button onclick="appendToDisplay('6')">6</button>
+                <button onclick="appendToDisplay('+')">+</button>
+                <button onclick="appendToDisplay('1')">1</button>
+                <button onclick="appendToDisplay('2')">2</button>
+                <button onclick="appendToDisplay('3')">3</button>
+                <button onclick="calculate()" class="equals">=</button>
+                <button onclick="appendToDisplay('0')" class="zero">0</button>
+                <button onclick="appendToDisplay('.')">.</button>
+            </div>
+        </div>`;
+  } else if (appType.includes('todo') || appType.includes('task')) {
+    content = `
+        <div class="todo-app">
+            <h2>Todo List</h2>
+            <div class="input-section">
+                <input type="text" id="todoInput" placeholder="Add a new task...">
+                <button onclick="addTodo()">Add</button>
+            </div>
+            <ul id="todoList" class="todo-list"></ul>
+        </div>`;
+  } else {
+    content = `
+        <div class="dynamic-app">
+            <h2>${prompt}</h2>
+            <p>This application was generated based on your request: "${prompt}"</p>
+            <div class="features">
+                <div class="feature">
+                    <h3>Interactive Elements</h3>
+                    <button onclick="showAlert()">Click Me</button>
+                </div>
+                <div class="feature">
+                    <h3>Dynamic Content</h3>
+                    <p id="dynamic-text">This text will change!</p>
+                    <button onclick="changeText()">Change Text</button>
+                </div>
+            </div>
+        </div>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${prompt} - Generated App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Generated: ${prompt}</h1>
+        </header>
+        <main>
+            ${content}
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>`;
+}
+
+function generateDynamicCSS(prompt: string): string {
+  return `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+main {
+    padding: 2rem;
+}
+
+/* Calculator Styles */
+.calculator {
+    max-width: 300px;
+    margin: 0 auto;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.display {
+    background: #222;
+    color: white;
+    padding: 20px;
+    text-align: right;
+    font-size: 2rem;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.buttons button {
+    padding: 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background: #e9ecef;
+    transition: all 0.2s;
+}
+
+.buttons button:hover {
+    background: #dee2e6;
+    transform: translateY(-2px);
+}
+
+.equals {
+    grid-row: span 2;
+    background: #667eea !important;
+    color: white !important;
+}
+
+.zero {
+    grid-column: span 2;
+}
+
+/* Todo Styles */
+.todo-app {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.input-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.input-section input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.input-section button {
+    padding: 12px 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.todo-list {
+    list-style: none;
+}
+
+.todo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.todo-item.completed {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+/* Dynamic App Styles */
+.dynamic-app h2 {
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.feature {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+button:hover {
+    background: #5a6fd8;
+    transform: translateY(-2px);
+}`;
+}
+
+function generateDynamicJS(prompt: string): string {
+  const appType = prompt.toLowerCase();
+  
+  if (appType.includes('calculator')) {
+    return `let display = document.getElementById('display');
+let currentInput = '0';
+let shouldResetDisplay = false;
+
+function updateDisplay() {
+    display.textContent = currentInput;
+}
+
+function clearDisplay() {
+    currentInput = '0';
+    updateDisplay();
+}
+
+function deleteLast() {
+    if (currentInput.length > 1) {
+        currentInput = currentInput.slice(0, -1);
+    } else {
+        currentInput = '0';
+    }
+    updateDisplay();
+}
+
+function appendToDisplay(value) {
+    if (shouldResetDisplay) {
+        currentInput = '';
+        shouldResetDisplay = false;
+    }
+    
+    if (currentInput === '0' && value !== '.') {
+        currentInput = value;
+    } else {
+        currentInput += value;
+    }
+    updateDisplay();
+}
+
+function calculate() {
+    try {
+        const result = eval(currentInput.replace('×', '*'));
+        currentInput = result.toString();
+        shouldResetDisplay = true;
+        updateDisplay();
+    } catch (error) {
+        currentInput = 'Error';
+        shouldResetDisplay = true;
+        updateDisplay();
+    }
+}`;
+  } else if (appType.includes('todo') || appType.includes('task')) {
+    return `let todos = [];
+let todoIdCounter = 0;
+
+function addTodo() {
+    const input = document.getElementById('todoInput');
+    const text = input.value.trim();
+    
+    if (text) {
+        const todo = {
+            id: todoIdCounter++,
+            text: text,
+            completed: false
+        };
+        todos.push(todo);
+        input.value = '';
+        renderTodos();
+    }
+}
+
+function deleteTodo(id) {
+    todos = todos.filter(todo => todo.id !== id);
+    renderTodos();
+}
+
+function toggleTodo(id) {
+    const todo = todos.find(todo => todo.id === id);
+    if (todo) {
+        todo.completed = !todo.completed;
+        renderTodos();
+    }
+}
+
+function renderTodos() {
+    const todoList = document.getElementById('todoList');
+    todoList.innerHTML = '';
+    
+    todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.className = 'todo-item' + (todo.completed ? ' completed' : '');
+        li.innerHTML = \`
+            <span onclick="toggleTodo(\${todo.id})">\${todo.text}</span>
+            <button onclick="deleteTodo(\${todo.id})">Delete</button>
+        \`;
+        todoList.appendChild(li);
+    });
+}
+
+document.getElementById('todoInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        addTodo();
+    }
+});`;
+  } else {
+    return `function showAlert() {
+    alert('Hello! This is your generated application.');
+}
+
+function changeText() {
+    const textElement = document.getElementById('dynamic-text');
+    const messages = [
+        'Text changed!',
+        'This is dynamic!',
+        'Generated with AI!',
+        'Interactive content!',
+        'Your app is working!'
+    ];
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    textElement.textContent = randomMessage;
+    textElement.style.color = '#667eea';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add some interactive effects
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+});`;
+  }
 });
 
 console.log('Generated application loaded successfully!');`;

@@ -177,13 +177,13 @@ export function CodeGenerator() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl h-screen flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
+    <div className="container mx-auto p-2 max-w-full h-screen flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h1 className="text-3xl font-bold flex-1 text-center">AI Code Generator</h1>
         <ThemeToggle />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">{/* min-h-0 allows flex children to shrink */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 flex-1 min-h-0 overflow-y-auto">{/* min-h-0 allows flex children to shrink */}
         {/* Left Panel - Projects List */}
         <div className="flex flex-col h-full">
           <Card className="h-full flex flex-col">
