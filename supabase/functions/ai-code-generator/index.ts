@@ -280,55 +280,90 @@ async function generateWithGemini(prompt: string, image?: string, model: string 
 async function generateWithHuggingFace(prompt: string, image?: string, model: string = 'microsoft/DialoGPT-large'): Promise<string> {
   console.log('Starting HuggingFace generation...');
   const apiKey = Deno.env.get('HUGGINGFACE_API_KEY');
-  if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not found');
+  if (!apiKey) {
+    console.error('HUGGINGFACE_API_KEY not found in environment variables');
+    throw new Error('HUGGINGFACE_API_KEY not found');
+  }
 
   const fullPrompt = `${BASE_PROMPT}\n\nUser Request: ${prompt}\n\nIMPORTANT: Generate UNIQUE and VARIED content based on this specific request. Make it different from previous generations.`;
 
-  console.log(`Calling HuggingFace API with model: ${model}`);
-  const response = await fetch(
-    `https://api-inference.huggingface.co/models/${model}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: fullPrompt,
-        parameters: {
-          max_new_tokens: 4000,
-          temperature: 0.8,
-          do_sample: true,
-          return_full_text: false
-        }
-      })
+  // Use text generation models that actually work
+  const workingModel = 'microsoft/DialoGPT-medium'; // Use a more reliable model
+  
+  console.log(`Calling HuggingFace API with model: ${workingModel}`);
+  
+  try {
+    const response = await fetch(
+      `https://api-inference.huggingface.co/models/${workingModel}`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: fullPrompt,
+          parameters: {
+            max_new_tokens: 1000,
+            temperature: 0.7,
+            do_sample: true,
+            return_full_text: false
+          },
+          options: {
+            wait_for_model: true
+          }
+        })
+      }
+    );
+
+    console.log('HuggingFace response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('HuggingFace API error response:', errorText);
+      
+      // If the model is not available or there's an error, generate structured response directly
+      console.log('HuggingFace API failed, generating structured code directly...');
+      return JSON.stringify({
+        html: generateDynamicHTML(prompt),
+        css: generateDynamicCSS(prompt),
+        js: generateDynamicJS(prompt),
+        framework: 'html',
+        description: `Generated ${prompt} application (HuggingFace API unavailable)`
+      });
     }
-  );
 
-  const data = await response.json();
-  console.log('HuggingFace response status:', response.status);
-  
-  if (!response.ok) {
-    console.error('HuggingFace API error response:', data);
-    throw new Error(`HuggingFace API error: ${data.error || 'Unknown error'}`);
-  }
-
-  const result = data[0]?.generated_text || data.generated_text;
-  
-  // If we don't get a proper response, generate a structured response
-  if (!result || result.length < 100) {
-    console.log('HuggingFace returned minimal response, generating structured code...');
+    const data = await response.json();
+    const result = data[0]?.generated_text || data.generated_text;
+    
+    // If we don't get a proper response, generate a structured response
+    if (!result || result.length < 100) {
+      console.log('HuggingFace returned minimal response, generating structured code...');
+      return JSON.stringify({
+        html: generateDynamicHTML(prompt),
+        css: generateDynamicCSS(prompt),
+        js: generateDynamicJS(prompt),
+        framework: 'html',
+        description: `Generated ${prompt} application using HuggingFace`
+      });
+    }
+    
+    console.log('HuggingFace generation completed successfully');
+    return result;
+    
+  } catch (error) {
+    console.error('HuggingFace API request failed:', error);
+    
+    // Always provide a fallback with proper structure
+    console.log('Generating fallback structured code due to API error...');
     return JSON.stringify({
       html: generateDynamicHTML(prompt),
       css: generateDynamicCSS(prompt),
       js: generateDynamicJS(prompt),
       framework: 'html',
-      description: `Generated ${prompt} application using HuggingFace`
+      description: `Generated ${prompt} application (fallback due to API error)`
     });
   }
-  
-  console.log('HuggingFace generation completed successfully');
-  return result;
 }
 
 async function generateWithNvidia(prompt: string, image?: string, model: string = 'nvidia/nemotron-4-340b-instruct'): Promise<string> {
