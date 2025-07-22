@@ -116,20 +116,44 @@ serve(async (req) => {
     // Parse the AI response
     let parsedCode;
     try {
-      parsedCode = JSON.parse(generatedResponse);
+      // Clean the response - remove markdown formatting if present
+      let cleanResponse = generatedResponse.trim();
+      
+      // Remove markdown code block wrapper if present
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // Try to find JSON object in the response
+      const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanResponse = jsonMatch[0];
+      }
+      
+      parsedCode = JSON.parse(cleanResponse);
+      
+      // Validate required fields
+      if (!parsedCode.html || !parsedCode.css || !parsedCode.js) {
+        throw new Error('Missing required fields in AI response');
+      }
+      
     } catch (error) {
       console.error('Failed to parse AI response as JSON:', error);
+      console.log('Raw response snippet:', generatedResponse.substring(0, 500));
+      
       // Try to extract code from markdown blocks
       const htmlMatch = generatedResponse.match(/```html\n([\s\S]*?)\n```/);
       const cssMatch = generatedResponse.match(/```css\n([\s\S]*?)\n```/);
       const jsMatch = generatedResponse.match(/```javascript\n([\s\S]*?)\n```/);
 
       parsedCode = {
-        html: htmlMatch?.[1] || generateFallbackHTML(prompt),
-        css: cssMatch?.[1] || generateFallbackCSS(),
-        js: jsMatch?.[1] || generateFallbackJS(),
+        html: htmlMatch?.[1] || generateDynamicHTML(prompt),
+        css: cssMatch?.[1] || generateDynamicCSS(prompt),
+        js: jsMatch?.[1] || generateDynamicJS(prompt),
         framework: 'html',
-        description: 'Generated web application'
+        description: `Generated ${prompt} application`
       };
     }
 
@@ -161,7 +185,19 @@ serve(async (req) => {
     console.error('Error stack:', error.stack);
     
     // Try to update project status to error if we have the projectId
-    const requestBody = await req.clone().json().catch(() => ({}));
+    let requestBody: any = {};
+    try {
+      // Re-extract the request body for error handling
+      if (req.bodyUsed) {
+        // If body already used, try to get projectId from the error context
+        requestBody = { projectId: null };
+      } else {
+        requestBody = await req.json();
+      }
+    } catch (e) {
+      requestBody = { projectId: null };
+    }
+    
     if (requestBody.projectId) {
       try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL');
