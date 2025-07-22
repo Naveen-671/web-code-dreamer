@@ -606,7 +606,25 @@ function generateDynamicHTML(prompt: string): string {
   const appType = prompt.toLowerCase();
   let content = '';
   
-  if (appType.includes('calculator')) {
+  if (appType.includes('tic tac toe') || appType.includes('tictactoe')) {
+    content = `
+        <div class="tic-tac-toe">
+            <h2>Tic Tac Toe</h2>
+            <div class="game-status" id="gameStatus">Player X's turn</div>
+            <div class="game-board" id="gameBoard">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+            <button onclick="resetGame()" class="reset-btn">Reset Game</button>
+        </div>`;
+  } else if (appType.includes('calculator')) {
     content = `
         <div class="calculator">
             <div class="display" id="display">0</div>
@@ -639,7 +657,36 @@ function generateDynamicHTML(prompt: string): string {
                 <input type="text" id="todoInput" placeholder="Add a new task...">
                 <button onclick="addTodo()">Add</button>
             </div>
+            <div class="filter-section">
+                <button onclick="filterTodos('all')" class="filter-btn active" id="allFilter">All</button>
+                <button onclick="filterTodos('active')" class="filter-btn" id="activeFilter">Active</button>
+                <button onclick="filterTodos('completed')" class="filter-btn" id="completedFilter">Completed</button>
+            </div>
             <ul id="todoList" class="todo-list"></ul>
+            <div class="stats" id="todoStats">
+                <span id="activeCount">0 items left</span>
+                <button onclick="clearCompleted()" id="clearCompleted">Clear completed</button>
+            </div>
+        </div>`;
+  } else if (appType.includes('weather')) {
+    content = `
+        <div class="weather-app">
+            <h2>Weather App</h2>
+            <div class="search-section">
+                <input type="text" id="cityInput" placeholder="Enter city name...">
+                <button onclick="searchWeather()">Search</button>
+            </div>
+            <div class="weather-display" id="weatherDisplay">
+                <div class="current-weather">
+                    <h3 id="cityName">New York</h3>
+                    <div class="temperature" id="temperature">22°C</div>
+                    <div class="condition" id="condition">Sunny</div>
+                    <div class="details">
+                        <span>Humidity: <span id="humidity">65%</span></span>
+                        <span>Wind: <span id="wind">10 mph</span></span>
+                    </div>
+                </div>
+            </div>
         </div>`;
   } else {
     content = `
@@ -683,39 +730,87 @@ function generateDynamicHTML(prompt: string): string {
 }
 
 function generateDynamicCSS(prompt: string): string {
-  return `* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px;
-}
-
-.container {
-    max-width: 800px;
+  const appType = prompt.toLowerCase();
+  
+  let specificStyles = '';
+  
+  if (appType.includes('tic tac toe') || appType.includes('tictactoe')) {
+    specificStyles = `
+/* Tic Tac Toe Styles */
+.tic-tac-toe {
+    max-width: 400px;
     margin: 0 auto;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-header {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    padding: 2rem;
     text-align: center;
 }
 
-main {
-    padding: 2rem;
+.tic-tac-toe h2 {
+    color: #667eea;
+    margin-bottom: 1rem;
+    font-size: 2rem;
 }
 
+.game-status {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 5px;
+    max-width: 300px;
+    margin: 0 auto 2rem;
+    background: #667eea;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.cell {
+    background: white;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 5px;
+}
+
+.cell:hover {
+    background: #f0f0f0;
+    transform: scale(0.95);
+}
+
+.cell.disabled {
+    cursor: not-allowed;
+}
+
+.reset-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.reset-btn:hover {
+    background: #ff5252;
+    transform: translateY(-2px);
+}
+
+.winner {
+    background: #4ecdc4 !important;
+    color: white !important;
+}`;
+  } else if (appType.includes('calculator')) {
+    specificStyles = `
 /* Calculator Styles */
 .calculator {
     max-width: 300px;
@@ -764,8 +859,9 @@ main {
 
 .zero {
     grid-column: span 2;
-}
-
+}`;
+  } else if (appType.includes('todo') || appType.includes('task')) {
+    specificStyles = `
 /* Todo Styles */
 .todo-app {
     max-width: 500px;
@@ -795,6 +891,29 @@ main {
     cursor: pointer;
 }
 
+.filter-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    background: #f8f9fa;
+    color: #333;
+    border: 2px solid #e9ecef;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.filter-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
 .todo-list {
     list-style: none;
 }
@@ -812,6 +931,101 @@ main {
 .todo-item.completed {
     text-decoration: line-through;
     opacity: 0.7;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}`;
+  } else if (appType.includes('weather')) {
+    specificStyles = `
+/* Weather App Styles */
+.weather-app {
+    max-width: 400px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.search-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.search-section input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.weather-display {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 30px;
+}
+
+.temperature {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #667eea;
+    margin: 10px 0;
+}
+
+.condition {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.details {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.details span {
+    color: #666;
+}`;
+  }
+
+  return `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+main {
+    padding: 2rem;
 }
 
 /* Dynamic App Styles */
@@ -847,13 +1061,131 @@ button {
 button:hover {
     background: #5a6fd8;
     transform: translateY(-2px);
+}
+
+${specificStyles}
+
+@media (max-width: 768px) {
+    .container {
+        margin: 10px;
+        border-radius: 10px;
+    }
+    
+    header {
+        padding: 1rem;
+    }
+    
+    main {
+        padding: 1rem;
+    }
+    
+    .game-board {
+        max-width: 250px;
+    }
+    
+    .cell {
+        height: 80px;
+        font-size: 1.5rem;
+    }
 }`;
 }
 
 function generateDynamicJS(prompt: string): string {
   const appType = prompt.toLowerCase();
   
-  if (appType.includes('calculator')) {
+  if (appType.includes('tic tac toe') || appType.includes('tictactoe')) {
+    return `let board = ['', '', '', '', '', '', '', '', ''];
+let currentPlayer = 'X';
+let gameActive = true;
+
+const winningConditions = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+];
+
+function handleCellClick(event) {
+    const clickedCell = event.target;
+    const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+    if (board[clickedCellIndex] !== '' || !gameActive) {
+        return;
+    }
+
+    board[clickedCellIndex] = currentPlayer;
+    clickedCell.innerHTML = currentPlayer;
+    
+    checkResult();
+}
+
+function checkResult() {
+    let roundWon = false;
+    let winningCombination = [];
+
+    for (let i = 0; i <= 7; i++) {
+        const winCondition = winningConditions[i];
+        let a = board[winCondition[0]];
+        let b = board[winCondition[1]];
+        let c = board[winCondition[2]];
+        
+        if (a === '' || b === '' || c === '') {
+            continue;
+        }
+        if (a === b && b === c) {
+            roundWon = true;
+            winningCombination = winCondition;
+            break;
+        }
+    }
+
+    if (roundWon) {
+        document.getElementById('gameStatus').innerHTML = \`Player \${currentPlayer} has won!\`;
+        gameActive = false;
+        highlightWinningCells(winningCombination);
+        return;
+    }
+
+    let roundDraw = !board.includes('');
+    if (roundDraw) {
+        document.getElementById('gameStatus').innerHTML = 'Game ended in a draw!';
+        gameActive = false;
+        return;
+    }
+
+    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    document.getElementById('gameStatus').innerHTML = \`Player \${currentPlayer}'s turn\`;
+}
+
+function highlightWinningCells(combination) {
+    combination.forEach(index => {
+        document.querySelector(\`[data-index="\${index}"]\`).classList.add('winner');
+    });
+}
+
+function resetGame() {
+    currentPlayer = 'X';
+    board = ['', '', '', '', '', '', '', '', ''];
+    gameActive = true;
+    document.getElementById('gameStatus').innerHTML = "Player X's turn";
+    
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.innerHTML = '';
+        cell.classList.remove('winner');
+        cell.classList.remove('disabled');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.cell').forEach(cell => 
+        cell.addEventListener('click', handleCellClick)
+    );
+});`;
+  } else if (appType.includes('calculator')) {
     return `let display = document.getElementById('display');
 let currentInput = '0';
 let shouldResetDisplay = false;
